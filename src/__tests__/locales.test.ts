@@ -21,6 +21,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  delete process.env.ANDROID_DEFAULT_LOCALE;
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
 
@@ -92,6 +93,37 @@ describe("discoverLocales", () => {
     expect(def?.filePath).toBe(path.join(tmpDir, "values", "strings.xml"));
     const es = locales.find((l) => l.locale === "es");
     expect(es?.filePath).toBe(path.join(tmpDir, "values-es", "strings.xml"));
+  });
+
+  it("uses ANDROID_DEFAULT_LOCALE env var to pick default folder", () => {
+    process.env.ANDROID_DEFAULT_LOCALE = "en";
+    createLocale(tmpDir, "values-en");
+    createLocale(tmpDir, "values-ru");
+    const locales = discoverLocales(tmpDir);
+    expect(locales).toHaveLength(2);
+    expect(locales.find((l) => l.locale === "default")?.filePath).toBe(
+      path.join(tmpDir, "values-en", "strings.xml")
+    );
+    expect(locales.find((l) => l.locale === "ru")).toBeDefined();
+  });
+
+  it("falls back to values/ when ANDROID_DEFAULT_LOCALE is not set", () => {
+    delete process.env.ANDROID_DEFAULT_LOCALE;
+    createLocale(tmpDir, "values");
+    const locales = discoverLocales(tmpDir);
+    expect(locales[0].locale).toBe("default");
+    expect(locales[0].filePath).toBe(path.join(tmpDir, "values", "strings.xml"));
+  });
+
+  it("does not double-count the default locale folder in non-default list", () => {
+    process.env.ANDROID_DEFAULT_LOCALE = "en";
+    createLocale(tmpDir, "values-en");
+    createLocale(tmpDir, "values-ru");
+    const locales = discoverLocales(tmpDir);
+    const localeNames = locales.map((l) => l.locale);
+    expect(localeNames).not.toContain("en");
+    expect(localeNames).toContain("default");
+    expect(localeNames).toContain("ru");
   });
 });
 

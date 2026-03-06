@@ -8,10 +8,18 @@ export interface LocaleConfig {
 
 export function discoverLocales(resDir: string): LocaleConfig[] {
   const locales: LocaleConfig[] = [];
+  const defaultLocaleName = process.env.ANDROID_DEFAULT_LOCALE;
 
-  const defaultFile = path.join(resDir, "values", "strings.xml");
-  if (fs.existsSync(defaultFile)) {
-    locales.push({ locale: "default", filePath: defaultFile });
+  if (defaultLocaleName) {
+    const customDefault = path.join(resDir, `values-${defaultLocaleName}`, "strings.xml");
+    if (fs.existsSync(customDefault)) {
+      locales.push({ locale: "default", filePath: customDefault });
+    }
+  } else {
+    const defaultFile = path.join(resDir, "values", "strings.xml");
+    if (fs.existsSync(defaultFile)) {
+      locales.push({ locale: "default", filePath: defaultFile });
+    }
   }
 
   const entries = fs.readdirSync(resDir, { withFileTypes: true });
@@ -19,6 +27,7 @@ export function discoverLocales(resDir: string): LocaleConfig[] {
     if (!entry.isDirectory()) continue;
     const match = entry.name.match(/^values-([a-z]{2,3}(?:-r[A-Z]{2})?)$/);
     if (!match) continue;
+    if (defaultLocaleName && match[1] === defaultLocaleName) continue;
     const stringsFile = path.join(resDir, entry.name, "strings.xml");
     if (fs.existsSync(stringsFile)) {
       locales.push({ locale: match[1], filePath: stringsFile });
