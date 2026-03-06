@@ -18,6 +18,8 @@ import { registerGitDiff } from "./tools/git-diff.js";
 import { registerAddPlural, registerUpdatePlural, registerDeletePlural } from "./tools/plurals.js";
 import { registerAddStringArray, registerUpdateStringArray, registerDeleteStringArray } from "./tools/string-arrays.js";
 import { registerFindUnusedKeys, registerTranslationStats, registerLintStrings } from "./tools/analysis.js";
+import { registerResources } from "./resources.js";
+import { getResDirs } from "./locales.js";
 
 const server = new McpServer({
   name: "android-string-manager",
@@ -65,6 +67,9 @@ registerLintStrings(server);
 
 // Git integration
 registerGitDiff(server);
+
+// Resources
+registerResources(server, getResDirs());
 
 async function main() {
   const transport = new StdioServerTransport();
