@@ -23,7 +23,7 @@ import { getResDirs } from "./locales.js";
 
 const server = new McpServer({
   name: "android-string-manager",
-  version: "2.2.0",
+  version: "2.3.0",
 });
 
 // Core CRUD
