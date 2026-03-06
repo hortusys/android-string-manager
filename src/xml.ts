@@ -180,6 +180,100 @@ export function sortStringsInXml(filePath: string): number {
   return swaps;
 }
 
+// --- Plural modification ---
+
+export function insertPluralInXml(
+  filePath: string,
+  name: string,
+  items: { quantity: string; value: string }[]
+): void {
+  let content = fs.readFileSync(filePath, "utf-8");
+  const itemLines = items
+    .map((item) => `        <item quantity="${item.quantity}">${escapeXml(item.value)}</item>`)
+    .join("\n");
+  const block = `    <plurals name="${name}">\n${itemLines}\n    </plurals>`;
+  const closingTag = "</resources>";
+  content = content.replace(closingTag, block + "\n" + closingTag);
+  fs.writeFileSync(filePath, content, "utf-8");
+}
+
+export function updatePluralInXml(
+  filePath: string,
+  name: string,
+  items: { quantity: string; value: string }[]
+): boolean {
+  let content = fs.readFileSync(filePath, "utf-8");
+  const regex = new RegExp(
+    `(<plurals\\s+name="${escapeRegex(name)}"[^>]*>)[\\s\\S]*?(<\\/plurals>)`
+  );
+  if (!regex.test(content)) return false;
+  const itemLines = items
+    .map((item) => `        <item quantity="${item.quantity}">${escapeXml(item.value)}</item>`)
+    .join("\n");
+  content = content.replace(regex, `$1\n${itemLines}\n    $2`);
+  fs.writeFileSync(filePath, content, "utf-8");
+  return true;
+}
+
+export function deletePluralFromXml(filePath: string, name: string): boolean {
+  let content = fs.readFileSync(filePath, "utf-8");
+  const regex = new RegExp(
+    `\\s*<plurals\\s+name="${escapeRegex(name)}"[^>]*>[\\s\\S]*?<\\/plurals>`,
+    "g"
+  );
+  const newContent = content.replace(regex, "");
+  if (newContent === content) return false;
+  fs.writeFileSync(filePath, newContent, "utf-8");
+  return true;
+}
+
+// --- String-array modification ---
+
+export function insertStringArrayInXml(
+  filePath: string,
+  name: string,
+  items: string[]
+): void {
+  let content = fs.readFileSync(filePath, "utf-8");
+  const itemLines = items
+    .map((item) => `        <item>${escapeXml(item)}</item>`)
+    .join("\n");
+  const block = `    <string-array name="${name}">\n${itemLines}\n    </string-array>`;
+  const closingTag = "</resources>";
+  content = content.replace(closingTag, block + "\n" + closingTag);
+  fs.writeFileSync(filePath, content, "utf-8");
+}
+
+export function updateStringArrayInXml(
+  filePath: string,
+  name: string,
+  items: string[]
+): boolean {
+  let content = fs.readFileSync(filePath, "utf-8");
+  const regex = new RegExp(
+    `(<string-array\\s+name="${escapeRegex(name)}"[^>]*>)[\\s\\S]*?(<\\/string-array>)`
+  );
+  if (!regex.test(content)) return false;
+  const itemLines = items
+    .map((item) => `        <item>${escapeXml(item)}</item>`)
+    .join("\n");
+  content = content.replace(regex, `$1\n${itemLines}\n    $2`);
+  fs.writeFileSync(filePath, content, "utf-8");
+  return true;
+}
+
+export function deleteStringArrayFromXml(filePath: string, name: string): boolean {
+  let content = fs.readFileSync(filePath, "utf-8");
+  const regex = new RegExp(
+    `\\s*<string-array\\s+name="${escapeRegex(name)}"[^>]*>[\\s\\S]*?<\\/string-array>`,
+    "g"
+  );
+  const newContent = content.replace(regex, "");
+  if (newContent === content) return false;
+  fs.writeFileSync(filePath, newContent, "utf-8");
+  return true;
+}
+
 // --- Format string placeholders ---
 
 export function extractPlaceholders(value: string): string[] {

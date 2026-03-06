@@ -2,6 +2,7 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { discoverLocales, getResDir, validateResDir } from "../locales.js";
 import { sortStringsInXml } from "../xml.js";
+import { withBackup } from "../backup.js";
 
 const resDirSchema = z.string().optional().describe("Path to the Android res/ directory. Defaults to ANDROID_RES_DIR env var.");
 
@@ -27,7 +28,7 @@ export function registerSortStrings(server: McpServer): void {
 
       const results: string[] = [];
       for (const l of targets) {
-        const moved = sortStringsInXml(l.filePath);
+        const moved = withBackup(l.filePath, () => sortStringsInXml(l.filePath));
         results.push(moved > 0 ? `  ${l.locale}: ${moved} strings reordered` : `  ${l.locale}: already sorted`);
       }
 

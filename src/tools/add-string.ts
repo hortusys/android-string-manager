@@ -2,6 +2,7 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { discoverLocales, getResDir, validateResDir } from "../locales.js";
 import { parseStringsXml, insertStringInXml } from "../xml.js";
+import { withBackup } from "../backup.js";
 
 const resDirSchema = z.string().optional().describe("Path to the Android res/ directory. Defaults to ANDROID_RES_DIR env var.");
 
@@ -35,8 +36,14 @@ export function registerAddString(server: McpServer): void {
         }
       }
 
-      for (const l of targetLocales) {
-        insertStringInXml(l.filePath, key, values[l.locale], afterKey);
+      try {
+        for (const l of targetLocales) {
+          withBackup(l.filePath, () => {
+            insertStringInXml(l.filePath, key, values[l.locale], afterKey);
+          });
+        }
+      } catch (e) {
+        return { content: [{ type: "text" as const, text: `Error: Write failed and was rolled back: ${e}` }] };
       }
 
       const summary = targetLocales.map((l) => `  ${l.locale}: ${values[l.locale]}`).join("\n");

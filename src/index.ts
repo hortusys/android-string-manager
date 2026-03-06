@@ -15,10 +15,12 @@ import { registerValidatePlaceholders } from "./tools/validate-placeholders.js";
 import { registerFindDuplicates } from "./tools/find-duplicates.js";
 import { registerExportCsv, registerImportCsv } from "./tools/export-csv.js";
 import { registerGitDiff } from "./tools/git-diff.js";
+import { registerAddPlural, registerUpdatePlural, registerDeletePlural } from "./tools/plurals.js";
+import { registerAddStringArray, registerUpdateStringArray, registerDeleteStringArray } from "./tools/string-arrays.js";
 
 const server = new McpServer({
   name: "android-string-manager",
-  version: "2.0.0",
+  version: "2.1.0",
 });
 
 // Core CRUD
@@ -28,6 +30,16 @@ registerGetString(server);
 registerUpdateString(server);
 registerDeleteString(server);
 registerRenameKey(server);
+
+// Plurals CRUD
+registerAddPlural(server);
+registerUpdatePlural(server);
+registerDeletePlural(server);
+
+// String-array CRUD
+registerAddStringArray(server);
+registerUpdateStringArray(server);
+registerDeleteStringArray(server);
 
 // Search & discovery
 registerSearchStrings(server);

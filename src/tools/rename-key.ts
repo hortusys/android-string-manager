@@ -2,6 +2,7 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { discoverLocales, getResDir, validateResDir } from "../locales.js";
 import { renameStringInXml } from "../xml.js";
+import { withBackup } from "../backup.js";
 
 const resDirSchema = z.string().optional().describe("Path to the Android res/ directory. Defaults to ANDROID_RES_DIR env var.");
 
@@ -24,7 +25,7 @@ export function registerRenameKey(server: McpServer): void {
       const notFound: string[] = [];
 
       for (const l of locales) {
-        const success = renameStringInXml(l.filePath, oldKey, newKey);
+        const success = withBackup(l.filePath, () => renameStringInXml(l.filePath, oldKey, newKey));
         if (success) { renamed.push(l.locale); }
         else { notFound.push(l.locale); }
       }

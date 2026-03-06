@@ -2,6 +2,7 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { discoverLocales, getResDir, validateResDir } from "../locales.js";
 import { updateStringInXml } from "../xml.js";
+import { withBackup } from "../backup.js";
 
 const resDirSchema = z.string().optional().describe("Path to the Android res/ directory. Defaults to ANDROID_RES_DIR env var.");
 
@@ -27,7 +28,7 @@ export function registerUpdateString(server: McpServer): void {
       for (const [locale, val] of Object.entries(values)) {
         const l = locales.find((lc) => lc.locale === locale);
         if (!l) { skipped.push(locale); continue; }
-        const success = updateStringInXml(l.filePath, key, val);
+        const success = withBackup(l.filePath, () => updateStringInXml(l.filePath, key, val));
         if (success) { updated.push(`  ${locale}: ${val}`); }
         else { notFound.push(locale); }
       }

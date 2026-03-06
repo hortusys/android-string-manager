@@ -2,6 +2,7 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { discoverLocales, getResDir, validateResDir } from "../locales.js";
 import { deleteStringFromXml } from "../xml.js";
+import { withBackup } from "../backup.js";
 
 const resDirSchema = z.string().optional().describe("Path to the Android res/ directory. Defaults to ANDROID_RES_DIR env var.");
 
@@ -23,7 +24,7 @@ export function registerDeleteString(server: McpServer): void {
       const notFound: string[] = [];
 
       for (const l of locales) {
-        const success = deleteStringFromXml(l.filePath, key);
+        const success = withBackup(l.filePath, () => deleteStringFromXml(l.filePath, key));
         if (success) { deleted.push(l.locale); }
         else { notFound.push(l.locale); }
       }
