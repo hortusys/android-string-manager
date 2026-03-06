@@ -17,10 +17,11 @@ import { registerExportCsv, registerImportCsv } from "./tools/export-csv.js";
 import { registerGitDiff } from "./tools/git-diff.js";
 import { registerAddPlural, registerUpdatePlural, registerDeletePlural } from "./tools/plurals.js";
 import { registerAddStringArray, registerUpdateStringArray, registerDeleteStringArray } from "./tools/string-arrays.js";
+import { registerFindUnusedKeys, registerTranslationStats, registerLintStrings } from "./tools/analysis.js";
 
 const server = new McpServer({
   name: "android-string-manager",
-  version: "2.1.0",
+  version: "2.2.0",
 });
 
 // Core CRUD
@@ -56,6 +57,11 @@ registerSortStrings(server);
 // Import/Export
 registerExportCsv(server);
 registerImportCsv(server);
+
+// Analysis & DX
+registerFindUnusedKeys(server);
+registerTranslationStats(server);
+registerLintStrings(server);
 
 // Git integration
 registerGitDiff(server);
