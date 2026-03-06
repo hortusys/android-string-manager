@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { discoverLocales, getResDir, validateResDir } from "../locales.js";
+import { discoverLocales, getResDirs, validateResDirs } from "../locales.js";
 import { renameStringInXml } from "../xml.js";
 import { withBackup } from "../backup.js";
 
@@ -16,11 +16,11 @@ export function registerRenameKey(server: McpServer): void {
       resDir: resDirSchema,
     },
     async ({ oldKey, newKey, resDir }) => {
-      const dir = getResDir(resDir);
-      const err = validateResDir(dir);
+      const dirs = getResDirs(resDir);
+      const err = validateResDirs(dirs);
       if (err) return { content: [{ type: "text" as const, text: `Error: ${err}` }] };
 
-      const locales = discoverLocales(dir);
+      const locales = discoverLocales(dirs);
       const renamed: string[] = [];
       const notFound: string[] = [];
 

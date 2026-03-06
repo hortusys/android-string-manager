@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { discoverLocales, getResDir, validateResDir } from "../locales.js";
+import { discoverLocales, getResDirs, validateResDirs } from "../locales.js";
 import { parseStringsXml } from "../xml.js";
 
 const resDirSchema = z.string().optional().describe("Path to the Android res/ directory. Defaults to ANDROID_RES_DIR env var.");
@@ -18,11 +18,11 @@ export function registerSearchStrings(server: McpServer): void {
       resDir: resDirSchema,
     },
     async ({ query, searchIn, regex, locale, limit, resDir }) => {
-      const dir = getResDir(resDir);
-      const err = validateResDir(dir);
+      const dirs = getResDirs(resDir);
+      const err = validateResDirs(dirs);
       if (err) return { content: [{ type: "text" as const, text: `Error: ${err}` }] };
 
-      const locales = discoverLocales(dir);
+      const locales = discoverLocales(dirs);
       const searchLocales = locale ? locales.filter((l) => l.locale === locale) : locales;
       const maxResults = limit ?? 50;
       const where = searchIn ?? "both";

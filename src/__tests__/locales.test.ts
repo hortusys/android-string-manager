@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { discoverLocales, validateResDir } from "../locales.js";
+import { discoverLocales, validateResDir, getResDirs, validateResDirs } from "../locales.js";
 
 let tmpDir: string;
 
@@ -143,5 +143,86 @@ describe("validateResDir", () => {
 
   it("returns error for dir with no strings.xml", () => {
     expect(validateResDir(tmpDir)).toContain("No strings.xml");
+  });
+});
+
+describe("getResDirs", () => {
+  it("returns single dir from param", () => {
+    const dirs = getResDirs("/some/path");
+    expect(dirs).toEqual(["/some/path"]);
+  });
+
+  it("splits comma-separated param", () => {
+    const dirs = getResDirs("/path/a,/path/b");
+    expect(dirs).toEqual(["/path/a", "/path/b"]);
+  });
+
+  it("splits comma-separated env var", () => {
+    const origEnv = process.env.ANDROID_RES_DIR;
+    process.env.ANDROID_RES_DIR = "/env/a,/env/b";
+    const dirs = getResDirs();
+    expect(dirs).toEqual(["/env/a", "/env/b"]);
+    process.env.ANDROID_RES_DIR = origEnv;
+  });
+
+  it("trims whitespace around paths", () => {
+    const dirs = getResDirs(" /a , /b ");
+    expect(dirs).toEqual(["/a", "/b"]);
+  });
+});
+
+describe("discoverLocales with multiple resDirs", () => {
+  it("merges locales from multiple res directories", () => {
+    const resDir2 = fs.mkdtempSync(path.join(os.tmpdir(), "asm-locale-test2-"));
+    createLocale(tmpDir, "values");
+    createLocale(tmpDir, "values-ru");
+    createLocale(resDir2, "values-uk");
+
+    const locales = discoverLocales([tmpDir, resDir2]);
+    const names = locales.map((l) => l.locale).sort();
+    expect(names).toEqual(["default", "ru", "uk"]);
+
+    fs.rmSync(resDir2, { recursive: true, force: true });
+  });
+
+  it("deduplicates same locale across modules (first wins)", () => {
+    const resDir2 = fs.mkdtempSync(path.join(os.tmpdir(), "asm-locale-test2-"));
+    createLocale(tmpDir, "values");
+    createLocale(tmpDir, "values-ru");
+    createLocale(resDir2, "values");
+    createLocale(resDir2, "values-ru");
+
+    const locales = discoverLocales([tmpDir, resDir2]);
+    const defaults = locales.filter((l) => l.locale === "default");
+    expect(defaults).toHaveLength(1);
+    expect(defaults[0].filePath).toBe(path.join(tmpDir, "values", "strings.xml"));
+
+    const ruLocales = locales.filter((l) => l.locale === "ru");
+    expect(ruLocales).toHaveLength(1);
+    expect(ruLocales[0].filePath).toBe(path.join(tmpDir, "values-ru", "strings.xml"));
+
+    fs.rmSync(resDir2, { recursive: true, force: true });
+  });
+
+  it("still works with single string arg (backward compat)", () => {
+    createLocale(tmpDir, "values");
+    const locales = discoverLocales(tmpDir);
+    expect(locales).toHaveLength(1);
+    expect(locales[0].locale).toBe("default");
+  });
+});
+
+describe("validateResDirs", () => {
+  it("returns null for valid dirs", () => {
+    createLocale(tmpDir, "values");
+    expect(validateResDirs([tmpDir])).toBeNull();
+  });
+
+  it("returns error for empty array", () => {
+    expect(validateResDirs([])).toContain("No res directory");
+  });
+
+  it("returns error if a dir does not exist", () => {
+    expect(validateResDirs(["/nonexistent"])).toContain("not found");
   });
 });

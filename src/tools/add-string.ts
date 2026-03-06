@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { discoverLocales, getResDir, validateResDir } from "../locales.js";
+import { discoverLocales, getResDirs, validateResDirs } from "../locales.js";
 import { parseStringsXml, insertStringInXml } from "../xml.js";
 import { withBackup } from "../backup.js";
 
@@ -17,11 +17,11 @@ export function registerAddString(server: McpServer): void {
       resDir: resDirSchema,
     },
     async ({ key, values, afterKey, resDir }) => {
-      const dir = getResDir(resDir);
-      const err = validateResDir(dir);
+      const dirs = getResDirs(resDir);
+      const err = validateResDirs(dirs);
       if (err) return { content: [{ type: "text" as const, text: `Error: ${err}` }] };
 
-      const locales = discoverLocales(dir);
+      const locales = discoverLocales(dirs);
       const targetLocales = locales.filter((l) => l.locale in values);
 
       if (targetLocales.length === 0) {
@@ -64,11 +64,11 @@ export function registerAddStrings(server: McpServer): void {
       resDir: resDirSchema,
     },
     async ({ strings, resDir }) => {
-      const dir = getResDir(resDir);
-      const err = validateResDir(dir);
+      const dirs = getResDirs(resDir);
+      const err = validateResDirs(dirs);
       if (err) return { content: [{ type: "text" as const, text: `Error: ${err}` }] };
 
-      const locales = discoverLocales(dir);
+      const locales = discoverLocales(dirs);
       const results: string[] = [];
       let added = 0;
 

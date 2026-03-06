@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { discoverLocales, getResDir, validateResDir } from "../locales.js";
+import { discoverLocales, getResDirs, validateResDirs } from "../locales.js";
 import { parseStringsXml, extractPlaceholders } from "../xml.js";
 
 const resDirSchema = z.string().optional().describe("Path to the Android res/ directory. Defaults to ANDROID_RES_DIR env var.");
@@ -13,11 +13,11 @@ export function registerValidatePlaceholders(server: McpServer): void {
       resDir: resDirSchema,
     },
     async ({ resDir }) => {
-      const dir = getResDir(resDir);
-      const err = validateResDir(dir);
+      const dirs = getResDirs(resDir);
+      const err = validateResDirs(dirs);
       if (err) return { content: [{ type: "text" as const, text: `Error: ${err}` }] };
 
-      const locales = discoverLocales(dir);
+      const locales = discoverLocales(dirs);
       // Build map: key -> locale -> placeholders
       const keyPlaceholders = new Map<string, Map<string, string[]>>();
 

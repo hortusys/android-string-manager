@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { getResDir, validateResDir } from "../locales.js";
+import { getResDirs, validateResDirs } from "../locales.js";
 import { findUnusedKeys, getTranslationStats, lintStrings } from "../analysis.js";
 
 const resDirSchema = z.string().optional().describe("Path to the Android res/ directory. Defaults to ANDROID_RES_DIR env var.");
@@ -15,11 +15,11 @@ export function registerFindUnusedKeys(server: McpServer): void {
       resDir: resDirSchema,
     },
     async ({ srcDirs, resDir }) => {
-      const dir = getResDir(resDir);
-      const err = validateResDir(dir);
+      const dirs = getResDirs(resDir);
+      const err = validateResDirs(dirs);
       if (err) return { content: [{ type: "text" as const, text: `Error: ${err}` }] };
 
-      const unused = findUnusedKeys(dir, srcDirs);
+      const unused = findUnusedKeys(dirs[0], srcDirs);
 
       if (unused.length === 0) {
         return { content: [{ type: "text" as const, text: "All string keys are referenced in source code." }] };
@@ -43,11 +43,11 @@ export function registerTranslationStats(server: McpServer): void {
       resDir: resDirSchema,
     },
     async ({ resDir }) => {
-      const dir = getResDir(resDir);
-      const err = validateResDir(dir);
+      const dirs = getResDirs(resDir);
+      const err = validateResDirs(dirs);
       if (err) return { content: [{ type: "text" as const, text: `Error: ${err}` }] };
 
-      const stats = getTranslationStats(dir);
+      const stats = getTranslationStats(dirs[0]);
 
       if (stats.locales.length === 0) {
         return { content: [{ type: "text" as const, text: `Total translatable keys: ${stats.totalTranslatable}\nNo non-default locales found.` }] };
@@ -78,11 +78,11 @@ export function registerLintStrings(server: McpServer): void {
       resDir: resDirSchema,
     },
     async ({ srcDirs, resDir }) => {
-      const dir = getResDir(resDir);
-      const err = validateResDir(dir);
+      const dirs = getResDirs(resDir);
+      const err = validateResDirs(dirs);
       if (err) return { content: [{ type: "text" as const, text: `Error: ${err}` }] };
 
-      const report = lintStrings(dir, srcDirs);
+      const report = lintStrings(dirs[0], srcDirs);
 
       const sections: string[] = [];
 

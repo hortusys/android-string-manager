@@ -1,7 +1,7 @@
 import { z } from "zod";
 import * as fs from "fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { discoverLocales, getResDir, validateResDir } from "../locales.js";
+import { discoverLocales, getResDirs, validateResDirs } from "../locales.js";
 import { parseStringsXml } from "../xml.js";
 
 const resDirSchema = z.string().optional().describe("Path to the Android res/ directory. Defaults to ANDROID_RES_DIR env var.");
@@ -22,11 +22,11 @@ export function registerExportCsv(server: McpServer): void {
       resDir: resDirSchema,
     },
     async ({ outputPath, resDir }) => {
-      const dir = getResDir(resDir);
-      const err = validateResDir(dir);
+      const dirs = getResDirs(resDir);
+      const err = validateResDirs(dirs);
       if (err) return { content: [{ type: "text" as const, text: `Error: ${err}` }] };
 
-      const locales = discoverLocales(dir);
+      const locales = discoverLocales(dirs);
       const allEntries = new Map<string, Map<string, string>>();
 
       for (const l of locales) {
@@ -69,15 +69,15 @@ export function registerImportCsv(server: McpServer): void {
       resDir: resDirSchema,
     },
     async ({ inputPath, dryRun, resDir }) => {
-      const dir = getResDir(resDir);
-      const err = validateResDir(dir);
+      const dirs = getResDirs(resDir);
+      const err = validateResDirs(dirs);
       if (err) return { content: [{ type: "text" as const, text: `Error: ${err}` }] };
 
       if (!fs.existsSync(inputPath)) {
         return { content: [{ type: "text" as const, text: `Error: File not found: ${inputPath}` }] };
       }
 
-      const locales = discoverLocales(dir);
+      const locales = discoverLocales(dirs);
       const csv = fs.readFileSync(inputPath, "utf-8");
       const lines = csv.trim().split("\n");
       if (lines.length < 2) {

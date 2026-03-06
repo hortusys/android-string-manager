@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { discoverLocales, getResDir, validateResDir } from "../locales.js";
+import { discoverLocales, getResDirs, validateResDirs } from "../locales.js";
 import { parseStringArraysXml, insertStringArrayInXml, updateStringArrayInXml, deleteStringArrayFromXml } from "../xml.js";
 import { withBackup } from "../backup.js";
 
@@ -16,11 +16,11 @@ export function registerAddStringArray(server: McpServer): void {
       resDir: resDirSchema,
     },
     async ({ key, locales: localeValues, resDir }) => {
-      const dir = getResDir(resDir);
-      const err = validateResDir(dir);
+      const dirs = getResDirs(resDir);
+      const err = validateResDirs(dirs);
       if (err) return { content: [{ type: "text" as const, text: `Error: ${err}` }] };
 
-      const locales = discoverLocales(dir);
+      const locales = discoverLocales(dirs);
       const targetLocales = locales.filter((l) => l.locale in localeValues);
 
       if (targetLocales.length === 0) {
@@ -60,11 +60,11 @@ export function registerUpdateStringArray(server: McpServer): void {
       resDir: resDirSchema,
     },
     async ({ key, locales: localeValues, resDir }) => {
-      const dir = getResDir(resDir);
-      const err = validateResDir(dir);
+      const dirs = getResDirs(resDir);
+      const err = validateResDirs(dirs);
       if (err) return { content: [{ type: "text" as const, text: `Error: ${err}` }] };
 
-      const locales = discoverLocales(dir);
+      const locales = discoverLocales(dirs);
       const updated: string[] = [];
       const notFound: string[] = [];
 
@@ -94,11 +94,11 @@ export function registerDeleteStringArray(server: McpServer): void {
       resDir: resDirSchema,
     },
     async ({ key, resDir }) => {
-      const dir = getResDir(resDir);
-      const err = validateResDir(dir);
+      const dirs = getResDirs(resDir);
+      const err = validateResDirs(dirs);
       if (err) return { content: [{ type: "text" as const, text: `Error: ${err}` }] };
 
-      const locales = discoverLocales(dir);
+      const locales = discoverLocales(dirs);
       const deleted: string[] = [];
       const notFound: string[] = [];
 

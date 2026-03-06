@@ -6,7 +6,21 @@ export interface LocaleConfig {
   filePath: string;
 }
 
-export function discoverLocales(resDir: string): LocaleConfig[] {
+export function discoverLocales(resDir: string | string[]): LocaleConfig[] {
+  if (Array.isArray(resDir)) {
+    const seen = new Set<string>();
+    const merged: LocaleConfig[] = [];
+    for (const dir of resDir) {
+      for (const lc of discoverLocales(dir)) {
+        if (!seen.has(lc.locale)) {
+          seen.add(lc.locale);
+          merged.push(lc);
+        }
+      }
+    }
+    return merged;
+  }
+
   const locales: LocaleConfig[] = [];
   const defaultLocaleName = process.env.ANDROID_DEFAULT_LOCALE;
 
@@ -49,4 +63,20 @@ const DEFAULT_RES_DIR = process.env.ANDROID_RES_DIR || "";
 
 export function getResDir(resDir?: string): string {
   return resDir || DEFAULT_RES_DIR;
+}
+
+export function getResDirs(resDir?: string): string[] {
+  const raw = resDir || process.env.ANDROID_RES_DIR || "";
+  if (!raw) return [];
+  return raw.split(",").map((d) => d.trim()).filter(Boolean);
+}
+
+export function validateResDirs(resDirs: string[]): string | null {
+  if (resDirs.length === 0) return "No res directory specified. Set ANDROID_RES_DIR env var or pass resDir.";
+  for (const dir of resDirs) {
+    if (!fs.existsSync(dir)) return `Resource directory not found: ${dir}`;
+  }
+  const locales = discoverLocales(resDirs);
+  if (locales.length === 0) return `No strings.xml files found in: ${resDirs.join(", ")}`;
+  return null;
 }
